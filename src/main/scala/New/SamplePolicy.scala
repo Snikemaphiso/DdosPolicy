@@ -2,36 +2,65 @@ package New
 
 import play.api.libs.json._
 
-import scala.collection.immutable
 import scala.io.Source
+import scala.util.{Failure, Success, Try}
 
-//class SamplePolicy
+trait Rule {
+  def performAction(e: Event): Unit
+  protected def action(): Unit = println(" ")
+}
+case object DEPLOY_DPI extends Rule {
+  override def performAction(e: Event): Unit = {
+    println(s"Action = Deploying DPI for ${e.resource_ID} ... ")
+    action()
+    println(s"...Done")
+    println()
+    println()
+  }
+}
+case object DENY_SOURCE extends Rule {
+  override def performAction(e: Event): Unit = {
+    println(s"Action = Denying source for ${e.resource_ID} ... ")
+    action()
+    println(s"...Done")
+    println()
+    println()
+  }
+}
+case object NO_ACTION extends Rule {
+  override def performAction(e: Event): Unit = {
+    println(s"Action = No action required. Will do nothing")
+    println()
+    println()
+  }
+}
+
 
 case class Event(e_type: String, e_rate: Int, t_type: String, resource_ID: String, severity: String)
+case class EventWithAction(event: Event, action: Rule)
 
 object Flooding extends App {
   implicit val eventReads: Reads[Event] = Json.reads[Event]
 
-  val filename = "src/main/scala/New/Jsonevent2.json"
+  val jsonAlertsStr: String = Source.fromFile("src/resources/alert.json").mkString
+  val alertsValue: JsValue = Json.parse(jsonAlertsStr)
 
-  var eventsList = List.empty[Event]
-
-  val jsonFromFile = Source.fromFile(filename).mkString
-  val jsonStringToJsValue: JsValue = Json.parse(jsonFromFile)
-  val jsValueToEventObject: List[Event] = Json.fromJson[List[Event]](jsonStringToJsValue).get
-
-  def Condition(alert: Event): Unit = {
-    if (alert.e_rate > 100) {
-      println(s"Action = deploy DPI (${alert.resource_ID})")
-    }
+  val jsValueToEventObject: List[Event] = Try(Json.fromJson[List[Event]](alertsValue).get) match {
+    case Failure(ex) => throw ex
+    case Success(value) => value
   }
 
-  jsValueToEventObject.foreach((event: Event) => Condition(event))
+  def mapAlertsToActions(alertEvents: List[Event]): List[EventWithAction] = {
+    alertEvents.map( e => {
+      val rate = e.e_rate
+      if (rate > 500) EventWithAction(e, DENY_SOURCE)
+      else if (rate > 100) EventWithAction(e, DEPLOY_DPI)
+      else EventWithAction(e, NO_ACTION)
+    }
+    )
+  }
 
-//  def DenyAll(alert2: Event): Unit = {
-//    if (alert2.e_rate > 500) {
-//      println("Action = Deny Source")
-//    }
-//  }
+  mapAlertsToActions(jsValueToEventObject)
+    .foreach((ewa: EventWithAction) => ewa.action.performAction(ewa.event))
 }
 
