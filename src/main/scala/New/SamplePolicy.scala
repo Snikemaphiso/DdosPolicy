@@ -18,7 +18,6 @@ object Flooding extends App {
 
   val jsonFromFile = Source.fromFile(filename).mkString
   val jsonStringToJsValue: JsValue = Json.parse(jsonFromFile)
-
   val jsValueToEventObject: List[Event] = Json.fromJson[List[Event]](jsonStringToJsValue).get
 
   def Condition(alert: Event): Unit = {
