@@ -7,7 +7,7 @@ import scala.util.{Failure, Success, Try}
 
 trait Rule {
   def performAction(e: Event): Unit
-  protected def action(): Unit = println(" ")
+  protected def action(): Unit = println("--->")
 }
 case object DEPLOY_DPI extends Rule {
   override def performAction(e: Event): Unit = {
