@@ -7,8 +7,10 @@ import scala.util.{Failure, Success, Try}
 
 trait Rule {
   def performPolicy(e: Event): Unit
+
   protected def policy(): Unit = println("--->")
 }
+
 case object ALLOW extends Rule {
   override def performPolicy(e: Event): Unit = {
     println(s"Action = Allow Traffic")
@@ -16,6 +18,7 @@ case object ALLOW extends Rule {
     println()
   }
 }
+
 case object DEPLOY_DPI extends Rule {
   override def performPolicy(e: Event): Unit = {
     println(s"Action = Deploying DPI at ${e.resource_ID} ... ")
@@ -25,20 +28,22 @@ case object DEPLOY_DPI extends Rule {
     println()
   }
 }
+
 case object MIGRATE extends Rule {
   override def performPolicy(e: Event): Unit = {
-    println(s"Action = Migrate ${e.resource_ID}" )
+    println(s"Action = Migrate ${e.resource_ID}")
     println()
     println()
   }
-//}
-//case object RE_DIRECT extends Rule {
-//  override def performPolicy(e: Event): Unit = {
-//    println(s"Action = No action required. Will do nothing")
-//    println()
-//    println()
- // }
+  //}
+  //case object RE_DIRECT extends Rule {
+  //  override def performPolicy(e: Event): Unit = {
+  //    println(s"Action = No action required. Will do nothing")
+  //    println()
+  //    println()
+  // }
 }
+
 case object DENY_SOURCE extends Rule {
   override def performPolicy(e: Event): Unit = {
     println(s"Action = Denying source for ${e.resource_ID} ... ")
@@ -48,6 +53,7 @@ case object DENY_SOURCE extends Rule {
     println()
   }
 }
+
 case object CLOSE_APP extends Rule {
   override def performPolicy(e: Event): Unit = {
     println(s"Action = Close Application ${e.resource_ID} ...")
@@ -55,6 +61,7 @@ case object CLOSE_APP extends Rule {
     println()
   }
 }
+
 case object NO_ACTION extends Rule {
   override def performPolicy(e: Event): Unit = {
     println(s"Action = No action required. Will do nothing")
@@ -64,6 +71,7 @@ case object NO_ACTION extends Rule {
 }
 
 case class Event(e_type: String, e_rate: Int, t_type: String, resource_ID: String, severity: String)
+
 case class EventWithPolicy(event: Event, policy: Rule)
 
 object Flooding extends App {
@@ -78,16 +86,18 @@ object Flooding extends App {
   }
 
   def mapAlertsToPolicy(alertEvents: List[Event]): List[EventWithPolicy] = {
-    alertEvents.map( e => {
+    alertEvents.map(e => {
       val rate = e.e_rate
       val severeness = e.severity
-      if (rate > 500) EventWithPolicy(e, DENY_SOURCE)
-      else if (rate > 100)
-      if (severeness  = moderate) EventWithPolicy(e, DEPLOY_DPI)
-      else EventWithPolicy(e, NO_ACTION)
-
-    }
-    )
+      if (rate > 500) {
+        EventWithPolicy(e, DENY_SOURCE)
+      } else if (rate > 100) {
+        if (severeness == "moderate") EventWithPolicy(e, DEPLOY_DPI)
+        else EventWithPolicy(e, NO_ACTION)
+      } else {
+        EventWithPolicy(e, NO_ACTION) //FIXME: Not sure what this should be.
+      }
+    })
   }
 
   mapAlertsToPolicy(jsValueToEventObject)
