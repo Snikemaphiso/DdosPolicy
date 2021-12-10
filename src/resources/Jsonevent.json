@@ -1,23 +1,17 @@
 
 [
   {
-    "title" : "Event Alert",
-    "type" : "object",
-    "description" : "DDoS Attack",
-    "required" : ["Event"],
-
+    "title": "Event Alert",
+    "type": "object",
+    "description": "DDoS Attack",
+    "required": ["Event"],
     "Event": {
-        "e_type" : "flooding attack",
-        "e_rate" : "650"
-      },
-      "target" : {
-        "t_type": "server",
-        "resource_ID": "10.10.1.0"
-      },
+      "e_type": "flooding attack",
+      "e_rate": 65,
+      "t_type": "server",
+      "resource_ID": "10.10.1.0",
       "severity": "moderate"
-      }
+    }
+  }
+]
 
-
-
-
-  ]
