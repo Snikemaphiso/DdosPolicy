@@ -1,23 +1,19 @@
-package Class
+package sandbox
 
 case class User(bandwidth: Int, name: String, time: Int)
 
  object ManageUsersConnections extends App {
 
-  override def main(args: Array[String]): Unit = {
+   val s1 = User(120, "Alice Simi", 55)
+   val s2 = User(80, "Mark James", 70)
+   val s3 = User(70, "Simi Abraham", 45)
+   val s4 = User(101, "James Paul", 89)
 
-    val s1 = User(120, "Alice Simi", 55)
-    val s2 = User(80, "Mark James", 70)
-    val s3 = User(70, "Simi Abraham", 45)
-    val s4 = User(101, "James Paul", 89)
+   denyAll(s1, s2, s3, s4)
 
-    denyAll(s1, s2, s3, s4)
+   resetAll(s1, s2, s3, s4)
 
-    resetAll(s1, s2, s3, s4)
-
-    findHighestConsumer(s1, s2, s3, s4)
-
-  }
+   findHighestConsumer(s1, s2, s3, s4)
 
   def denyAll(allUsers: User*): Seq[Unit] = {
     allUsers.map {user =>
@@ -30,6 +26,7 @@ case class User(bandwidth: Int, name: String, time: Int)
       }
     }
   }
+
   def resetAll(allUsers: User*): Seq[Unit] = {
     allUsers.map { user =>
       if (user.time > 60) {
@@ -42,7 +39,7 @@ case class User(bandwidth: Int, name: String, time: Int)
     }
   }
 
-  def findHighestConsumer(allUsers: User*) {
+  def findHighestConsumer(allUsers: User*): Unit = {
     val theHighestConsumer = allUsers
       .groupBy((user: User) => user.bandwidth)
       .maxBy((bandwidthUserTuple: (Int, Seq[User])) => bandwidthUserTuple._1)

@@ -1,5 +1,4 @@
-import scala.collection.immutable
-import scala.collection.parallel.immutable
+package sandbox
 
 object Demo {
 
@@ -42,7 +41,7 @@ object Demo {
     println(s1, s2)
 
 
-    def findHighestConsumer(user1: User, user2: User) {
+    def findHighestConsumer(user1: User, user2: User): Unit = {
       val theHighestConsumer = if (user1.bandwidth > user2.bandwidth) user1 else user2
       println(theHighestConsumer.name + " is the highest consumer")
 
@@ -51,8 +50,8 @@ object Demo {
     //    val allUsers : User*
     //    val allUsers : Seq[User]
 
-    def denyAll(alluser: User*) {
-      alluser.map { u: User =>
+    def denyAll(alluser: User*): Unit = {
+      alluser.foreach { u: User =>
         if (u.bandwidth > 100) println(u.name + " is using " + u.bandwidth + "Gbs")
       }
     }
@@ -65,12 +64,12 @@ object Demo {
 
     denyAll(s1, s2)
 
-    val highestConsumer: Int = List(s1, s2) map (_.bandwidth) max
+    val highestConsumer: Int = List(s1, s2).map(_.bandwidth).max
     val highestConsumer2: List[Unit] = List(s1, s2).groupBy(_.bandwidth).maxBy(_._1)._2.map { xx =>
       xx.name + " is the highest consumer"
 
       println(highestConsumer)
-//      println(highestConsumer2.mkString)
+      //      println(highestConsumer2.mkString)
 
 
     }

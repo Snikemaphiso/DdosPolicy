@@ -1,10 +1,10 @@
-package Class
+package sandbox
 
   object Net {
 
     case class User(var Bandwidth: Int = 100, var name: String = "", var time: Int = 90)
 
-      def findHighestConsumer(user1: User, user2: User) {
+      def findHighestConsumer(user1: User, user2: User): Unit = {
         val theHighestConsumer =
           if (user1.Bandwidth > user2.Bandwidth) {
             user1
@@ -16,9 +16,6 @@ package Class
         println(s1, s2)
         println(theHighestConsumer.name + "is the highest consumer")
       }
-
-
-
 
   }
 

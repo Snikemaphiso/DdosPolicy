@@ -22,12 +22,11 @@ object Var {
 }
 class Bandwidth {
 
-  val num = Var(0)
+  var num = Var(0)
 
   def Usage(x: Int): Unit = {
-    val curVal = num()
-    num() = curVal + x
-
+    val curVal = num
+    num = Var(curVal.apply() + x)
   }
 
 }

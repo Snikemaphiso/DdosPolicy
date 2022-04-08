@@ -10,7 +10,7 @@ object Signal { def apply(initVal: Int) = new Signal(initVal) }
 
 abstract class Var {
   var curVal: Int
-  def apply(initVal:Int) = curVal = initVal
+  def apply(initVal:Int): Unit = curVal = initVal
 }
 //object Var {
 //  def apply(initVal:Int) = new Var(initVal)
