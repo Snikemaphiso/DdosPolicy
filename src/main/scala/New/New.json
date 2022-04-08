@@ -1,0 +1,27 @@
+
+[
+  {
+    "Policy": {
+      "name": "Event",
+      "Type": "",
+      "target": "server",
+      "severity": "moderate"
+    },
+    "condition": {
+      "flow": ">=100"
+    },
+    "action": "deploy DPI"
+  },
+  {
+    "Policy": {
+      "name": "Event",
+      "Type": "",
+      "target": "server",
+      "severity": "moderate"
+    },
+    "condition": {
+      "flow": ">=100"
+    },
+    "action": "deploy DPI"
+  }
+]

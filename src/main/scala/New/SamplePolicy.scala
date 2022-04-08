@@ -21,10 +21,10 @@ case object ALLOW extends Rule {
 
 case object DEPLOY_DPI extends Rule {
   override def performPolicy(e: Event): Unit = {
-    println(s"Action = Deploying DPI at ${e.resource_ID} ... ")
+//    execute action = Deploy DPI at ${e.resource_ID} ... ")
     policy()
     println(s"...Done")
-    println()
+    println("DPI Deployed Successfully")
     println()
   }
 }
