@@ -16,7 +16,7 @@ object Ddos extends App {
     case Success(value) => value
   }
 
-  def mapAlertsToPolicy(alertEvents: List[Event]): List[EventWithAction] = {
+  def mapAlertsToPolicy(alertEvents: List[Event]): List[EventWithAction] = { //TODO: Whole method to be rewritten tso rules are fetched from `Policy`
     alertEvents.map(e => {
       val rate = e.e_rate
       val severeness = e.severity
@@ -26,7 +26,7 @@ object Ddos extends App {
         if (severeness == "moderate") EventWithAction(e, DEPLOY_DPI)
         else EventWithAction(e, NO_ACTION)
       } else {
-        EventWithAction(e, NO_ACTION) //FIXME: Not sure what this should be.
+        EventWithAction(e, NO_ACTION)
       }
     })
   }
