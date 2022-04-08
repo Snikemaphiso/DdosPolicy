@@ -2,57 +2,57 @@ package ddos.main.controllers
 
 import ddos.main.models.Event
 
-trait Policy {
-  def performPolicy(e: Event): Unit
-  protected def policy(): Unit = println("--->")
+trait Action {
+  def performPAction(e: Event): Unit
+  protected def actionName(): Unit = println("Action: " + this.getClass.getSimpleName)
 }
 
-case object ALLOW extends Policy {
-  override def performPolicy(e: Event): Unit = {
+case object ALLOW extends Action {
+  override def performPAction(e: Event): Unit = {
     println(s"Action = Allow Traffic")
     println()
     println()
   }
 }
 
-case object DEPLOY_DPI extends Policy {
-  override def performPolicy(e: Event): Unit = {
+case object DEPLOY_DPI extends Action {
+  override def performPAction(e: Event): Unit = {
     println(s"Action = Deploying DPI at ${e.resource_ID} ... ")
-    policy()
+    actionName()
     println(s"...Done")
     println()
     println()
   }
 }
 
-case object MIGRATE extends Policy {
-  override def performPolicy(e: Event): Unit = {
+case object MIGRATE extends Action {
+  override def performPAction(e: Event): Unit = {
     println(s"Action = Migrate ${e.resource_ID}")
     println()
     println()
   }
 }
 
-case object DENY_SOURCE extends Policy {
-  override def performPolicy(e: Event): Unit = {
+case object DENY_SOURCE extends Action {
+  override def performPAction(e: Event): Unit = {
     println(s"Action = Denying source for ${e.resource_ID} ... ")
-    policy()
+    actionName()
     println(s"...Done")
     println()
     println()
   }
 }
 
-case object CLOSE_APP extends Policy {
-  override def performPolicy(e: Event): Unit = {
+case object CLOSE_APP extends Action {
+  override def performPAction(e: Event): Unit = {
     println(s"Action = Close Application ${e.resource_ID} ...")
     println()
     println()
   }
 }
 
-case object NO_ACTION extends Policy {
-  override def performPolicy(e: Event): Unit = {
+case object NO_ACTION extends Action {
+  override def performPAction(e: Event): Unit = {
     println(s"Action = No action required. Will do nothing")
     println()
     println()
