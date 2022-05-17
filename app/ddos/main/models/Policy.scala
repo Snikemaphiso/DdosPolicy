@@ -1,6 +1,7 @@
 package models
 
-import play.api.libs.json.{Json, OFormat}
+import models.DdosJson
+import play.api.libs.json.{Json, OFormat, Reads}
 
 case class Condition(flow: String)
 case object Condition {
@@ -13,6 +14,6 @@ case class Policy(name: String,
                   severity: String,
                   condition: Condition,
                   action: String) //TODO: Action needs to be mapped to the Action trait so we can have it as `action: Action`
-case object Policy {
-  implicit val policyFormat: OFormat[Policy] = Json.format[Policy]
+case object Policy extends DdosJson {
+  implicit val policyFormat: Reads[Policy] = Json.reads[Policy]
 }
