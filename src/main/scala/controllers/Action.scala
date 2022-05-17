@@ -2,7 +2,7 @@ package controllers
 
 import models.Event
 
-trait Action {
+abstract class Action {
   def performPAction(e: Event): Unit
   protected def actionName(): Unit = println("Action: " + this.getClass.getSimpleName)
 }

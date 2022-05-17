@@ -1,6 +1,5 @@
 package models
 
-import models.DdosJson
 import play.api.libs.json.{Json, OFormat, Reads}
 
 case class Condition(flow: String)
