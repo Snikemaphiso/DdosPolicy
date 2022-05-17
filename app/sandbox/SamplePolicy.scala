@@ -1,7 +1,7 @@
 package sandbox
 
 import ddos.main.controllers.{DENY_SOURCE, DEPLOY_DPI, NO_ACTION}
-import ddos.main.models.{Event, EventWithPolicy}
+import ddos.main.models.{Event, EventWithAction}
 import play.api.libs.json.{JsValue, Json}
 
 import scala.io.Source
@@ -17,21 +17,21 @@ object SamplePolicy extends App {
     case Success(value) => value
   }
 
-  def mapAlertsToPolicy(alertEvents: List[Event]): List[EventWithPolicy] = {
+  def mapAlertsToPolicy(alertEvents: List[Event]): List[EventWithAction] = {
     alertEvents.map(e => {
       val rate = e.e_rate
       val severeness = e.severity
       if (rate > 500) {
-        EventWithPolicy(e, DENY_SOURCE)
+        EventWithAction(e, DENY_SOURCE)
       } else if (rate > 100) {
-        if (severeness == "moderate") EventWithPolicy(e, DEPLOY_DPI)
-        else EventWithPolicy(e, NO_ACTION)
+        if (severeness == "moderate") EventWithAction(e, DEPLOY_DPI)
+        else EventWithAction(e, NO_ACTION)
       } else {
-        EventWithPolicy(e, NO_ACTION) //FIXME: Not sure what this should be.
+        EventWithAction(e, NO_ACTION) //FIXME: Not sure what this should be.
       }
     })
   }
 
   mapAlertsToPolicy(jsValueToEventObject)
-    .foreach((ewa: EventWithPolicy) => ewa.policy.performPolicy(ewa.event))
+    .foreach((ewa: EventWithAction) => ewa.action.performPAction(ewa.event))
 }
