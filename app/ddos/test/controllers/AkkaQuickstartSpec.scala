@@ -2,6 +2,7 @@
 package controllers
 
 import akka.actor.testkit.typed.scaladsl.ScalaTestWithActorTestKit
+import controllers.Greeter.{Greet, Greeted}
 import org.scalatest.wordspec.AnyWordSpecLike
 
 //#definition

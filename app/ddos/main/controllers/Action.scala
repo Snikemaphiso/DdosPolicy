@@ -1,6 +1,6 @@
-package ddos.main.controllers
+package controllers
 
-import ddos.main.models.Event
+import models.Event
 
 trait Action {
   def performPAction(e: Event): Unit

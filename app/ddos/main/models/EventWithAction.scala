@@ -1,6 +1,6 @@
-package ddos.main.models
+package models
 
-import ddos.main.controllers.Action
+import controllers.Action
 import play.api.libs.json.{Json, OFormat}
 
 case class EventWithAction(event: Event, action: Action)

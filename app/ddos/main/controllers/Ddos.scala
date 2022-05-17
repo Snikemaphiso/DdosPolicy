@@ -1,6 +1,6 @@
-package ddos.main.controllers
+package controllers
 
-import ddos.main.models.{Event, EventWithAction}
+import models.{Event, EventWithAction}
 import play.api.libs.json.{JsValue, Json}
 
 import scala.io.Source
