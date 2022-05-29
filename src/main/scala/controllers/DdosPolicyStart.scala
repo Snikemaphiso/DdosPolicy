@@ -21,13 +21,8 @@ object EventConsumer {
 
 object ActionForEventBot {
 
-  def apply(max: Int = 1): Behavior[EventConsumer.Recipient] = {
-    bot(0, max)
-  }
-
-  private def bot(eventCounter: Int, max: Int): Behavior[EventConsumer.Recipient] =
+  def apply(): Behavior[EventConsumer.Recipient] =
     Behaviors.receive { (context, message: EventConsumer.Recipient) =>
-      val n = eventCounter + 1
       context.log.info("Performing action for event type [{}] with Resource ID [{}]...", message.payload.e_type, message.payload.resource_ID)
       // TODO:
       //  Need to perform some action.
