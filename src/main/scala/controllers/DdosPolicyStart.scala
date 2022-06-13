@@ -15,6 +15,9 @@ object EventConsumer {
   def apply(): Behavior[ReceivedEvent] = Behaviors.receive { (context, receivedEvent) =>
     context.log.info("Received DDOS event: \n{}!", prettyPrint(toJson(receivedEvent.payload)))
     receivedEvent.replyTo ! Recipient(receivedEvent.payload, context.self)
+
+//    context.log.info("Received DDOS event2: \n{}!", prettyPrint(toJson(receivedEvent.payload)))
+//    receivedEvent.replyTo ! Recipient(receivedEvent.payload, context.self)
     Behaviors.same
   }
 }
@@ -23,7 +26,7 @@ object ActionForEventBot {
 
   def apply(): Behavior[EventConsumer.Recipient] =
     Behaviors.receive { (context, message: EventConsumer.Recipient) =>
-      context.log.info("Performing action for event type [{}] with Resource ID [{}]...", message.payload.e_type, message.payload.resource_ID)
+      context.log.info("Performing action for event type [{}] at Resource [{}] with Severity [{}]...", message.payload.e_type, message.payload.t_type, message.payload.severity)
       // TODO:
       //  Need to perform some action.
       //  We need to change payload from Event to Event with action,
@@ -53,14 +56,19 @@ object DdosPolicyStart extends App with DdosJson {
   val ddosPolicyMain: ActorSystem[Event] = ActorSystem(DdosPolicyMain(), "DdosPolicyStart")
 
   val arguments = args.mkString
+//  val arguments2 = args.mkString
 
   println(s"ARGS: $arguments")
+//  println(s"ARGS: $arguments2")
 
   val events: Seq[Event] = getEventFromJsonString(arguments)
+//  val events2: Seq[Event] = getEventFromJsonString(arguments2)
 
-  if(events.isEmpty) {
+  if (events.isEmpty) {
     println("No passed args or args are not in the expected format")
+
   } else {
-    for(policyEvent <- events) yield ddosPolicyMain ! policyEvent
+    for (policyEvent <- events) yield ddosPolicyMain ! policyEvent
   }
+
 }

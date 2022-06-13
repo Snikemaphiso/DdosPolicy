@@ -14,10 +14,4 @@
     "severity": "moderate"
   },
   {
-    "e_type" : "flooding attack2",
-    "e_rate" : 700,
-    "t_type": "server",
-    "resource_ID": "10.10.1.1",
-    "severity": "severe"
-  }
-]
+    "e_type" : "flooding attack2", "e_rate" : 700, "t_type": "server", "resource_ID": "10.10.1.1", "severity": "severe"}]

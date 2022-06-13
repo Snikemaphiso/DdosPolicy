@@ -18,6 +18,8 @@ object Greeter {
     //#greeter-send-messages
     message.replyTo ! Greeted(message.whom, context.self)
     //#greeter-send-messages
+    //context.log.info("Hello {}!", message.whom)
+    //message.replyTo ! Greeted(message.whom, context.self)
     Behaviors.same
   }
 }
@@ -26,19 +28,18 @@ object Greeter {
 //#greeter-bot
 object GreeterBot {
 
-  def apply(max: Int): Behavior[Greeter.Greeted] = {
-    bot(0, max)
-  }
-
-  private def bot(greetingCounter: Int, max: Int): Behavior[Greeter.Greeted] =
+  def apply(): Behavior[Greeter.Greeted] = {
     Behaviors.receive { (context, message) =>
-      val n = greetingCounter + 1
-      context.log.info("Greeting {} for {}", n, message.whom)
-      if (n == max) {
+      //val n = greetingCounter + 1
+      if (message.whom == "Charles") {
+      context.log.info("Greeting Detected for {}", message.whom)
+
         Behaviors.stopped
       } else {
-        message.from ! Greeter.Greet(message.whom, context.self)
-        bot(n, max)
+        //message.from ! Greeter.Greet(message.whom, context.self)
+        context.log.info("Greeting Detected for {}", message.whom)
+        Behaviors.stopped
+      }
       }
     }
 }
@@ -53,13 +54,15 @@ object GreeterMain {
     Behaviors.setup { context =>
       //#create-actors
       val greeter = context.spawn(Greeter(), "greeter")
+      //val greeter2 = context.spawn(Greeter(), "greeter2")
       //#create-actors
 
       Behaviors.receiveMessage { message =>
         //#create-actors
-        val replyTo = context.spawn(GreeterBot(max = 3), message.name)
+        val replyTo = context.spawn(GreeterBot(), message.name)
         //#create-actors
         greeter ! Greeter.Greet(message.name, replyTo)
+       // greeter2 ! Greeter.Greet(message.name, replyTo)
         Behaviors.same
       }
     }
@@ -74,6 +77,8 @@ object AkkaQuickstart extends App {
 
   //#main-send-messages
   greeterMain ! SayHello("Charles")
+  greeterMain ! SayHello("John")
+  greeterMain ! SayHello("Peter")
   //#main-send-messages
 }
 //#main-class
