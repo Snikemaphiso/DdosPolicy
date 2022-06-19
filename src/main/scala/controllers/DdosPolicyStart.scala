@@ -68,7 +68,7 @@ object DdosPolicyStart extends App with DdosJson {
     println("No passed args or args are not in the expected format")
 
   } else {
-    for (policyEvent <- events) yield ddosPolicyMain ! policyEvent
+    for (policyEvent: Event <- events) yield ddosPolicyMain ! policyEvent
   }
 
 }
