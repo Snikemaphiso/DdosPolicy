@@ -7,21 +7,21 @@ import akka.actor.typed.ActorSystem
 import akka.actor.typed.Behavior
 import akka.actor.typed.scaladsl.{ActorContext, Behaviors}
 import akka.event.slf4j.Logger
-import controllers.GreeterMain.SayHello
+import controllers.AlertMain.SayEvent
 
 import java.util.UUID
 import scala.util.Random
 
 //#greeter-actor
-object Greeter {
-  final case class Greet(whom: String, replyTo: ActorRef[Greeted])
+object PolicyModel {
+  final case class Alert(whom: String, replyTo: ActorRef[Listener])
 
-  final case class Greeted(whom: String, from: ActorRef[Greet])
+  final case class Listener(whom: String, from: ActorRef[Alert])
 
-  def apply(): Behavior[Greet] = Behaviors.receive { (context, message) =>
-    context.log.info("Hello {}!", message.whom)
+  def apply(): Behavior[Alert] = Behaviors.receive { (context, message) =>
+    context.log.info("Event Severity: {}!", message.whom)
     //#greeter-send-messages
-    message.replyTo ! Greeted(message.whom, context.self)
+    message.replyTo ! Listener(message.whom, context.self)
     //#greeter-send-messages
     //context.log.info("Hello {}!", message.whom)
     //message.replyTo ! Greeted(message.whom, context.self)
@@ -31,40 +31,85 @@ object Greeter {
 //#greeter-actor
 
 //#greeter-bot
-object GreeterBot {
+object AlertBot {
 
-  def apply(): Behavior[Greeter.Greeted] = {
+  def apply(): Behavior[PolicyModel.Listener] = {
     Behaviors.receive { (context, message) =>
       //val n = greetingCounter + 1
-      if (message.whom == "Charles") {
-        context.log.info("Greeting Detected for {}", message.whom)
+      if (message.whom == "Severe") {
+        context.log.info("Event listener 1 Detected with Severity: {}. Policy Triggered: Deny Source", message.whom)
         Behaviors.stopped
-      } else {
-        //message.from ! Greeter.Greet(message.whom, context.self)
-        context.log.info("Greeting Detected for {}", message.whom)
+      }
+
+      else {
+////          message.from ! Greeter.Greet(message.whom, context.self)
+//          context.log.info("Event Detected with Severity: {}. Policy DPI Triggered", message.whom)
+          Behaviors.stopped
+
+        }
+      }
+    }
+  }
+
+object AlertBot2 {
+
+  def apply(): Behavior[PolicyModel.Listener] = {
+    Behaviors.receive { (context, message) =>
+      //val n = greetingCounter + 1
+      if (message.whom == "Low") {
+        context.log.info("Event listener 2 Detected event with Severity: {}. Policy Triggered: Deploy DPI", message.whom)
         Behaviors.stopped
+      }
+
+      else {
+        ////          message.from ! Greeter.Greet(message.whom, context.self)
+//        context.log.info("Event Detected with Severity: {}. Policy DPI Triggered", message.whom)
+        Behaviors.stopped
+
       }
     }
   }
 }
+
+//object AlertBot3 {
+//
+//  def apply(): Behavior[PolicyModel.Listener] = {
+//    Behaviors.receive { (context, message) =>
+//      //val n = greetingCounter + 1
+//      if (message.whom == "Medium") {
+//        context.log.info("Event listener 3 Detected with Severity: {}. Policy DPI Triggered", message.whom)
+//        Behaviors.stopped
+//      }
+//
+//      else {
+//        ////          message.from ! Greeter.Greet(message.whom, context.self)
+//        //        context.log.info("Event Detected with Severity: {}. Policy DPI Triggered", message.whom)
+//        Behaviors.stopped
+//
+//      }
+//    }
+//  }
+//}
 //#greeter-bot
 
 //#greeter-main
-object GreeterMain {
+object AlertMain {
 
-  final case class SayHello(name: String)
+  final case class SayEvent(name: String)
 
-  def apply(): Behavior[SayHello] =
-    Behaviors.setup { context: ActorContext[SayHello] =>
+  def apply(): Behavior[SayEvent] =
+    Behaviors.setup { context: ActorContext[SayEvent] =>
       //#create-actors
-      val greeter = context.spawn(Greeter(), "greeter")
+      val policymodel = context.spawn(PolicyModel(), "listener")
       //#create-actors
 
-      Behaviors.receiveMessage { message: SayHello =>
+      Behaviors.receiveMessage { message: SayEvent =>
         //#create-reply-actor-for-each-greeter
-        val replyTo = context.spawn(GreeterBot(), message.name + "-" + UUID.randomUUID()) //Added randomUUID to the name as actor names have to be unique
+        val replyTo = context.spawn(AlertBot(), message.name + "-" + UUID.randomUUID()) //Added randomUUID to the name as actor names have to be unique
+        val replyTo2 = context.spawn(AlertBot2(), message.name + "-" + UUID.randomUUID())
         //#create-reply-actor-for-each-greeter
-        greeter ! Greeter.Greet(message.name, replyTo)
+        policymodel ! PolicyModel.Alert(message.name, replyTo)
+        policymodel ! PolicyModel.Alert(message.name, replyTo2)
         Behaviors.same
       }
     }
@@ -76,21 +121,21 @@ object AkkaQuickstart extends App {
   val log = Logger.apply("AkkaQuickStart")
 
   //#actor-system
-  val greeterMain: ActorSystem[SayHello] = ActorSystem(GreeterMain(), "AkkaQuickStart")
+  val alertMain: ActorSystem[SayEvent] = ActorSystem(AlertMain(), "AkkaQuickStart")
   //#actor-system
 
-  val namesList = List("John", "Charles", "Peter")
+  val namesList = List("Severe", "Low")
 
   def randomNum: Int = Random.nextInt(namesList.length)
 
   val max = 10
   var maxRuns = Random.nextInt(max) //Will choose a random number between 1 to the value of max, for each run
 
-  log.info(s"Will say 'Hello', a total of [$maxRuns times] to any of [${namesList.mkString(", ")}]")
+  log.info(s"Reporting 'Event severity', a total of [$maxRuns times] with any of [${namesList.mkString(", ")}]")
 
   while (maxRuns != 0) {
     val name = namesList(randomNum)
-    greeterMain ! SayHello(name) //Remember, these calls are concurrent so greetings and replies may not the in the order that they were sent
+    alertMain ! SayEvent(name) //Remember, these calls are concurrent so alert and response may not be in the order that they were sent
     maxRuns = maxRuns - 1
   }
 }

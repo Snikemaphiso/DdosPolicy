@@ -26,7 +26,7 @@ object ActionForEventBot {
 
   def apply(): Behavior[EventConsumer.Recipient] =
     Behaviors.receive { (context, message: EventConsumer.Recipient) =>
-      context.log.info("Performing action for event type [{}] at Resource [{}] with Severity [{}]...", message.payload.e_type, message.payload.t_type, message.payload.severity)
+      context.log.info("Performing action: DENY_SOURCE for event type [{}] at Resource [{}] with Severity [{}]...", message.payload.e_type, message.payload.t_type, message.payload.severity)
       // TODO:
       //  Need to perform some action.
       //  We need to change payload from Event to Event with action,
