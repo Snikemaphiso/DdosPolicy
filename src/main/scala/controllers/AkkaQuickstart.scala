@@ -1,7 +1,6 @@
 //#full-example
 package controllers
 
-
 import akka.actor.typed.ActorRef
 import akka.actor.typed.ActorSystem
 import akka.actor.typed.Behavior
@@ -34,62 +33,25 @@ object PolicyModel {
 object AlertBot {
 
   def apply(): Behavior[PolicyModel.Listener] = {
-    Behaviors.receive { (context, message) =>
-      //val n = greetingCounter + 1
-      if (message.whom == "Severe") {
-        context.log.info("Event listener 1 Detected with Severity: {}. Policy Triggered: Deny Source", message.whom)
-        Behaviors.stopped
-      }
 
-      else {
-////          message.from ! Greeter.Greet(message.whom, context.self)
-//          context.log.info("Event Detected with Severity: {}. Policy DPI Triggered", message.whom)
+    val logMessagePrefix = "Event listener Detected event with Severity: {}. Policy Triggered:"
+
+    Behaviors.receive { (context, message) =>
+      message.whom match {
+        case "Low" =>
+          context.log.info(s"$logMessagePrefix Deploy DPI", message.whom)
           Behaviors.stopped
-
-        }
-      }
-    }
-  }
-
-object AlertBot2 {
-
-  def apply(): Behavior[PolicyModel.Listener] = {
-    Behaviors.receive { (context, message) =>
-      //val n = greetingCounter + 1
-      if (message.whom == "Low") {
-        context.log.info("Event listener 2 Detected event with Severity: {}. Policy Triggered: Deploy DPI", message.whom)
-        Behaviors.stopped
-      }
-
-      else {
-        ////          message.from ! Greeter.Greet(message.whom, context.self)
-//        context.log.info("Event Detected with Severity: {}. Policy DPI Triggered", message.whom)
-        Behaviors.stopped
-
+        case "Severe" =>
+          context.log.info(s"$logMessagePrefix Deny Source", message.whom)
+          Behaviors.stopped
+        case _ => // So when you need to handle another message severity (e.g. Medium), just create a new case before this default case
+          context.log.info("Unsupported message type: {}", message.whom)
+          Behaviors.stopped
       }
     }
   }
 }
 
-//object AlertBot3 {
-//
-//  def apply(): Behavior[PolicyModel.Listener] = {
-//    Behaviors.receive { (context, message) =>
-//      //val n = greetingCounter + 1
-//      if (message.whom == "Medium") {
-//        context.log.info("Event listener 3 Detected with Severity: {}. Policy DPI Triggered", message.whom)
-//        Behaviors.stopped
-//      }
-//
-//      else {
-//        ////          message.from ! Greeter.Greet(message.whom, context.self)
-//        //        context.log.info("Event Detected with Severity: {}. Policy DPI Triggered", message.whom)
-//        Behaviors.stopped
-//
-//      }
-//    }
-//  }
-//}
 //#greeter-bot
 
 //#greeter-main
@@ -100,16 +62,14 @@ object AlertMain {
   def apply(): Behavior[SayEvent] =
     Behaviors.setup { context: ActorContext[SayEvent] =>
       //#create-actors
-      val policymodel = context.spawn(PolicyModel(), "listener")
+      val policyModel = context.spawn(PolicyModel(), "listener")
       //#create-actors
 
       Behaviors.receiveMessage { message: SayEvent =>
         //#create-reply-actor-for-each-greeter
-        val replyTo = context.spawn(AlertBot(), message.name + "-" + UUID.randomUUID()) //Added randomUUID to the name as actor names have to be unique
-        val replyTo2 = context.spawn(AlertBot2(), message.name + "-" + UUID.randomUUID())
+        val replyTo = context.spawn(AlertBot(), message.name + "-" + UUID.randomUUID()) //Added a random number to the name as actor names have to be unique
         //#create-reply-actor-for-each-greeter
-        policymodel ! PolicyModel.Alert(message.name, replyTo)
-        policymodel ! PolicyModel.Alert(message.name, replyTo2)
+        policyModel ! PolicyModel.Alert(message.name, replyTo)
         Behaviors.same
       }
     }
@@ -124,7 +84,7 @@ object AkkaQuickstart extends App {
   val alertMain: ActorSystem[SayEvent] = ActorSystem(AlertMain(), "AkkaQuickStart")
   //#actor-system
 
-  val namesList = List("Severe", "Low")
+  val namesList = List("Severe", "Low", "Medium")
 
   def randomNum: Int = Random.nextInt(namesList.length)
 
