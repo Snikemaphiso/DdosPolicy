@@ -14,12 +14,12 @@ object Ddos extends App {
 
   def mapAlertsToPolicy(alertEvents: List[Event]): List[EventWithAction] = { //TODO: Whole method to be rewritten so rules are fetched from `Policy`
     alertEvents.map(e => {
-      val rate = e.e_rate
-      val severeness = e.severity
+      val rate = e.event_xterics.consumption.consumption_rate
+      val severity = e.severity
       if (rate > 500) {
         EventWithAction(e, DENY_SOURCE)
       } else if (rate > 100) {
-        if (severeness == "moderate") EventWithAction(e, DEPLOY_DPI)
+        if (severity.isEmpty) EventWithAction(e, DEPLOY_DPI)
         else EventWithAction(e, NO_ACTION)
       } else {
         EventWithAction(e, NO_ACTION)

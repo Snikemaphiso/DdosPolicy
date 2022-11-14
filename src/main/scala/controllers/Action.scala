@@ -4,12 +4,12 @@ import models.Event
 
 abstract class Action {
   def performPAction(e: Event): Unit
-  protected def actionName(): Unit = println("Action: " + this.getClass.getSimpleName)
+  protected def actionName(): Unit = println("Action: " + this.toString)
 }
 
 case object ALLOW extends Action {
   override def performPAction(e: Event): Unit = {
-    println(s"Action = Allow Traffic")
+    println(s"Action = Allow Traffic for ${e.target.target_ID} ${if(e.target_location.IP.isDefined) "at IP address: " + e.target_location.IP.get}")
     println()
     println()
   }
@@ -17,7 +17,7 @@ case object ALLOW extends Action {
 
 case object DEPLOY_DPI extends Action {
   override def performPAction(e: Event): Unit = {
-    println(s"Action = Deploying DPI at ${e.resource_ID} ... ")
+    println(s"Action = Deploying DPI at ${e.event_type.attack_class} ... ")
     actionName()
     println(s"...Done")
     println()
@@ -27,7 +27,7 @@ case object DEPLOY_DPI extends Action {
 
 case object MIGRATE extends Action {
   override def performPAction(e: Event): Unit = {
-    println(s"Action = Migrate ${e.resource_ID}")
+    println(s"Action = Migrate ${e.target_location.location}")
     println()
     println()
   }
@@ -35,7 +35,7 @@ case object MIGRATE extends Action {
 
 case object DENY_SOURCE extends Action {
   override def performPAction(e: Event): Unit = {
-    println(s"Action = Denying source for ${e.resource_ID} ... ")
+    println(s"Action = Denying source for ${e.event_type.attack_class} ... ")
     actionName()
     println(s"...Done")
     println()
@@ -45,7 +45,7 @@ case object DENY_SOURCE extends Action {
 
 case object CLOSE_APP extends Action {
   override def performPAction(e: Event): Unit = {
-    println(s"Action = Close Application ${e.resource_ID} ...")
+    println(s"Action = Close Application ${e.target.target_type} ...")
     println()
     println()
   }

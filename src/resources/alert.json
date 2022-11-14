@@ -1,43 +1,23 @@
-
 [
   {
-    "Event": {
-      "event_header": {
-        "report_ID": "int",
-        "reporter_ID": "int",
-        "time_stamp": "time",
-        "related_report_ID": "int"
-      },
-      "event_type": {
-        "attack_class": "string",
-        "attack_types": "string",
-        "attack_granularity": "string"
-      },
-      "target": {
-        "target_type": "string",
-        "target_ID": "int"
-      },
-      "target_state": {
-        "significance": "string",
-        "configuration": "string"
-      },
-      "target_location": {
-        "location": "string",
-        "IP": "int"
-      },
-      "severity": "String",
-      "event_xterics": {
-        "temporal_behaviour": {
-          "start_time": "time",
-          "end_time": "time"
-        },
-        "consumption": {
-          "consumption_type": "string",
-          "consumption_rate": "int"
-        }
+    "event_header": {
+      "report_ID": 1000
+    },
+    "event_type": {
+      "attack_class": "bandwith"
+    },
+    "target": {
+      "target_type": "server",
+      "target_ID": 12
+    },
+    "target_location": {
+      "location": "vm3"
+    },
+    "severity": "low",
+    "event_xterics": {
+      "consumption": {
+        "consumption_rate": 150
       }
     }
   }
 ]
-
-

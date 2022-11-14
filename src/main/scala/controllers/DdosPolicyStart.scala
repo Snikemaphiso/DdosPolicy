@@ -13,20 +13,54 @@ object EventConsumer {
   final case class Recipient(payload: Event, from: ActorRef[ReceivedEvent])
 
   def apply(): Behavior[ReceivedEvent] = Behaviors.receive { (context, receivedEvent) =>
-    context.log.info("Received DDOS event: \n{}!", prettyPrint(toJson(receivedEvent.payload)))
+    context.log.info("Received DDOS event: \n{}", prettyPrint(toJson(receivedEvent.payload)))
     receivedEvent.replyTo ! Recipient(receivedEvent.payload, context.self)
-
-//    context.log.info("Received DDOS event2: \n{}!", prettyPrint(toJson(receivedEvent.payload)))
-//    receivedEvent.replyTo ! Recipient(receivedEvent.payload, context.self)
     Behaviors.same
   }
 }
 
-object ActionForEventBot {
+object PolicyOneBot {
 
   def apply(): Behavior[EventConsumer.Recipient] =
     Behaviors.receive { (context, message: EventConsumer.Recipient) =>
-      context.log.info("Performing action for event type [{}] at Resource [{}] with Severity [{}]...", message.payload.e_type, message.payload.t_type, message.payload.severity)
+      val event = message.payload
+
+      def performAction(action: Action, severity: String = ""): Unit = {
+        context.log.info(
+          "Performing action for event type [{}] at Resource [{}] with Severity [{}]...",
+          event.event_type.attack_class,
+          event.target.target_type,
+          severity
+        )
+        context.log.info(s"Performing Action of type: ${action.toString}")
+        context.log.info("Done")
+      }
+
+      event.severity match {
+        case Some(severity: String) => severity match {
+          case "low" => performAction(ALLOW, severity)
+          case "medium" => performAction(DENY_SOURCE, severity)
+          case _ => context.log.info(s"Unknown severity: [$severity]")
+        }
+        case None =>
+          context.log.info(s"No severity for event [${event.event_header.report_ID}]")
+          performAction(DENY_SOURCE)
+      }
+
+      Behaviors.stopped
+    }
+}
+
+object PolicyTwoBot {
+
+  def apply(): Behavior[EventConsumer.Recipient] =
+    Behaviors.receive { (context, message: EventConsumer.Recipient) =>
+      context.log.info(
+        "Performing action for event type [{}] at Resource [{}] with Severity [{}]...",
+        message.payload.event_type.attack_class,
+        message.payload.target.target_type,
+        message.payload.severity.getOrElse("")
+      )
       // TODO:
       //  Need to perform some action.
       //  We need to change payload from Event to Event with action,
@@ -37,36 +71,43 @@ object ActionForEventBot {
     }
 }
 
-object DdosPolicyMain {
+object DdosEventListener {
 
   def apply(): Behavior[Event] =
     Behaviors.setup { context: ActorContext[Event] =>
-      val eventConsumer = context.spawn(EventConsumer(), "NEW_EVENT_CONSUMER")
+      val eventConsumer = context.spawn(EventConsumer(), "EVENT_CONSUMER")
 
       Behaviors.receiveMessage { event: Event =>
-        val replyTo: ActorRef[EventConsumer.Recipient] = context.spawn(ActionForEventBot(), "DDOS_EVENT_ACTION")
 
-        eventConsumer ! EventConsumer.ReceivedEvent(event, replyTo)
+        event.event_xterics.consumption.consumption_rate match {
+          case rate: Int =>
+            if (rate >= 100 && rate < 200) {
+              val replyTo: ActorRef[EventConsumer.Recipient] = context.spawn(PolicyOneBot(), "Policy_One")
+              context.log.info("Performing action for Policy One")
+              eventConsumer ! EventConsumer.ReceivedEvent(event, replyTo)
+              Behaviors.same
+            }
+          case rate: Int =>
+            if (rate >= 200 && rate < 300 ) {
+              val replyTo: ActorRef[EventConsumer.Recipient] = context.spawn(PolicyTwoBot(), "Policy_Two")
+              context.log.info("Performing action for Policy Two")
+              eventConsumer ! EventConsumer.ReceivedEvent(event, replyTo)
+              Behaviors.same
+            }
+          case _ => Behaviors.same
+        }
         Behaviors.same
       }
     }
 }
 
 object DdosPolicyStart extends App with DdosJson {
-  val ddosPolicyMain: ActorSystem[Event] = ActorSystem(DdosPolicyMain(), "DdosPolicyStart")
+  val ddosPolicyMain: ActorSystem[Event] = ActorSystem(DdosEventListener(), "DdosEventListener")
 
-  val arguments = args.mkString
-//  val arguments2 = args.mkString
-
-  println(s"ARGS: $arguments")
-//  println(s"ARGS: $arguments2")
-
-  val events: Seq[Event] = getEventFromJsonString(arguments)
-//  val events2: Seq[Event] = getEventFromJsonString(arguments2)
+  val events: Seq[Event] = getEventFromJsonString(args.mkString)
 
   if (events.isEmpty) {
     println("No passed args or args are not in the expected format")
-
   } else {
     for (policyEvent: Event <- events) yield ddosPolicyMain ! policyEvent
   }
