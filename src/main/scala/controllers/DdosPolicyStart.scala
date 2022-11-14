@@ -106,10 +106,7 @@ object DdosPolicyStart extends App with DdosJson {
 
   val events: Seq[Event] = getEventFromJsonString(args.mkString)
 
-  if (events.isEmpty) {
-    println("No passed args or args are not in the expected format")
-  } else {
-    for (policyEvent: Event <- events) yield ddosPolicyMain ! policyEvent
-  }
+  if (events.isEmpty) println("No passed args or args are not in the expected format")
+  else for (event <- events) yield ddosPolicyMain ! event
 
 }
