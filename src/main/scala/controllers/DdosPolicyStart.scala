@@ -79,6 +79,7 @@ object DdosEventListener {
 
       Behaviors.receiveMessage { event: Event =>
 
+//        If (event.event_xterics.consumption.consumption_rate >= 100 && event.severity="High"){}
         event.event_xterics.consumption.consumption_rate match {
           case rate: Int =>
             if (rate >= 100 && rate < 200) {
@@ -87,6 +88,37 @@ object DdosEventListener {
               eventConsumer ! EventConsumer.ReceivedEvent(event, replyTo)
               Behaviors.same
             }
+//          case rate: Int =>
+//            if (rate >= 200 && rate < 300 ) {
+//              val replyTo: ActorRef[EventConsumer.Recipient] = context.spawn(PolicyTwoBot(), "Policy_Two")
+//              context.log.info("Performing action for Policy Two")
+//              eventConsumer ! EventConsumer.ReceivedEvent(event, replyTo)
+//              Behaviors.same
+//            }
+          case _ => Behaviors.same
+        }
+        Behaviors.same
+      }
+    }
+}
+
+object DdosEventListener2 {
+
+  def apply(): Behavior[Event] =
+    Behaviors.setup { context: ActorContext[Event] =>
+      val eventConsumer = context.spawn(EventConsumer(), "EVENT_CONSUMER")
+
+      Behaviors.receiveMessage { event: Event =>
+
+        //        If (event.event_xterics.consumption.consumption_rate >= 100 && event.severity="High"){}
+        event.event_xterics.consumption.consumption_rate match {
+//          case rate: Int =>
+//            if (rate >= 100 && rate < 200) {
+//              val replyTo: ActorRef[EventConsumer.Recipient] = context.spawn(PolicyOneBot(), "Policy_One")
+//              context.log.info("Performing action for Policy One")
+//              eventConsumer ! EventConsumer.ReceivedEvent(event, replyTo)
+//              Behaviors.same
+//            }
           case rate: Int =>
             if (rate >= 200 && rate < 300 ) {
               val replyTo: ActorRef[EventConsumer.Recipient] = context.spawn(PolicyTwoBot(), "Policy_Two")
@@ -100,9 +132,8 @@ object DdosEventListener {
       }
     }
 }
-
 object DdosPolicyStart extends App with DdosJson {
-  val ddosPolicyMain: ActorSystem[Event] = ActorSystem(DdosEventListener(), "DdosEventListener")
+  val ddosPolicyMain: ActorSystem[Event] = ActorSystem(DdosEventListener (),"DdosEventListener")
 
   val events: Seq[Event] = getEventFromJsonString(args.mkString)
 
