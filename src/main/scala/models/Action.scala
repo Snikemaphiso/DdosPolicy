@@ -1,6 +1,4 @@
-package controllers
-
-import models.Event
+package models
 
 abstract class Action {
   def performPAction(e: Event): Unit

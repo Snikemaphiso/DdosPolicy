@@ -1,19 +1,26 @@
 //#full-example
 package controllers
 
-import akka.actor.typed.ActorRef
-import akka.actor.typed.ActorSystem
-import akka.actor.typed.Behavior
 import akka.actor.typed.scaladsl.{ActorContext, Behaviors}
-import models.{DdosJson, Event}
-import play.api.libs.json.Json.{toJson, prettyPrint}
+import akka.actor.typed.{ActorRef, ActorSystem, Behavior}
+import akka.http.scaladsl.Http
+import models.{ALLOW, Action, DENY_SOURCE, DdosInputType, Event, Policy}
+import play.api.libs.json.Json.{prettyPrint, toJson}
+import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
+import akka.http.scaladsl.model.{ContentTypes, HttpEntity}
+import akka.http.scaladsl.server.Directives.{as, complete, concat, entity, get, path, post}
+import akka.http.scaladsl.server.Route
+
+import scala.concurrent.{ExecutionContextExecutor, Future}
+import scala.io.StdIn
 
 object EventConsumer {
+
   final case class ReceivedEvent(payload: Event, replyTo: ActorRef[Recipient])
   final case class Recipient(payload: Event, from: ActorRef[ReceivedEvent])
 
-  def apply(): Behavior[ReceivedEvent] = Behaviors.receive { (context, receivedEvent) =>
-    context.log.info("Received DDOS event: \n{}", prettyPrint(toJson(receivedEvent.payload)))
+  def apply(): Behavior[ReceivedEvent] = Behaviors.receive { (context, receivedEvent: ReceivedEvent) =>
+    context.log.info("Received DDOS event: \n{}", prettyPrint(toJson(receivedEvent.payload.toString)))
     receivedEvent.replyTo ! Recipient(receivedEvent.payload, context.self)
     Behaviors.same
   }
@@ -79,7 +86,6 @@ object DdosEventListener {
 
       Behaviors.receiveMessage { event: Event =>
 
-//        If (event.event_xterics.consumption.consumption_rate >= 100 && event.severity="High"){}
         event.event_xterics.consumption.consumption_rate match {
           case rate: Int =>
             if (rate >= 100 && rate < 200) {
@@ -88,13 +94,13 @@ object DdosEventListener {
               eventConsumer ! EventConsumer.ReceivedEvent(event, replyTo)
               Behaviors.same
             }
-//          case rate: Int =>
-//            if (rate >= 200 && rate < 300 ) {
-//              val replyTo: ActorRef[EventConsumer.Recipient] = context.spawn(PolicyTwoBot(), "Policy_Two")
-//              context.log.info("Performing action for Policy Two")
-//              eventConsumer ! EventConsumer.ReceivedEvent(event, replyTo)
-//              Behaviors.same
-//            }
+          case rate: Int =>
+            if (rate >= 200 && rate < 300 ) {
+              val replyTo: ActorRef[EventConsumer.Recipient] = context.spawn(PolicyTwoBot(), "Policy_Two")
+              context.log.info("Performing action for Policy Two")
+              eventConsumer ! EventConsumer.ReceivedEvent(event, replyTo)
+              Behaviors.same
+            }
           case _ => Behaviors.same
         }
         Behaviors.same
@@ -110,15 +116,7 @@ object DdosEventListener2 {
 
       Behaviors.receiveMessage { event: Event =>
 
-        //        If (event.event_xterics.consumption.consumption_rate >= 100 && event.severity="High"){}
         event.event_xterics.consumption.consumption_rate match {
-//          case rate: Int =>
-//            if (rate >= 100 && rate < 200) {
-//              val replyTo: ActorRef[EventConsumer.Recipient] = context.spawn(PolicyOneBot(), "Policy_One")
-//              context.log.info("Performing action for Policy One")
-//              eventConsumer ! EventConsumer.ReceivedEvent(event, replyTo)
-//              Behaviors.same
-//            }
           case rate: Int =>
             if (rate >= 200 && rate < 300 ) {
               val replyTo: ActorRef[EventConsumer.Recipient] = context.spawn(PolicyTwoBot(), "Policy_Two")
@@ -132,12 +130,53 @@ object DdosEventListener2 {
       }
     }
 }
-object DdosPolicyStart extends App with DdosJson {
-  val ddosPolicyMain: ActorSystem[Event] = ActorSystem(DdosEventListener (),"DdosEventListener")
+object DdosPolicyStart extends App with DdosInputType {
+  implicit val ddosMainActor: ActorSystem[Event] = ActorSystem(DdosEventListener (),"DdosEventListener")
+  implicit val ec: ExecutionContextExecutor = ddosMainActor.executionContext
 
-  val events: Seq[Event] = getEventFromJsonString(args.mkString)
+  val route: Route = getRoute
 
-  if (events.isEmpty) println("No passed args or args are not in the expected format")
-  else for (event <- events) yield ddosPolicyMain ! event
+  val bindingFuture: Future[Http.ServerBinding] = {
+    Http().newServerAt("localhost", 8080).bind(route)
+  }
 
+  println(s"Server now online. Please navigate to http://localhost:8080/event\nPress RETURN to stop...")
+  StdIn.readLine() // let it run until user presses return
+
+  bindingFuture
+    .flatMap(_.unbind()) // trigger unbinding from the port
+    .onComplete(_ => ddosMainActor.terminate()) // and shutdown when done
+
+
+
+  def getRoute: Route = {
+    concat(
+      path("event") {
+        get {
+          complete(HttpEntity(ContentTypes.`text/html(UTF-8)`, "<h1>Call this endpoint with an event json as a payload, using POST  </h1>"))
+        }
+      },
+      path("event") {
+        post {
+          entity(as[Event]) { event: Event =>
+            println(event)
+            complete(HttpEntity(ContentTypes.`application/json`, "<h1>Accept an event</h1>"))
+          }
+        }
+      },
+      path("policy") {
+        get {
+          complete(HttpEntity(ContentTypes.`text/html(UTF-8)`, "<h1>Call this endpoint with a policy json as a payload, using POST </h1>"))
+        }
+      },
+      path("policy") {
+        post {
+          entity(as[Policy]) { policy: Policy =>
+            println(policy)
+            complete(HttpEntity(ContentTypes.`application/json`, "<h1>Accept an policy</h1>"))
+          }
+        }
+      }
+    )
+  }
 }

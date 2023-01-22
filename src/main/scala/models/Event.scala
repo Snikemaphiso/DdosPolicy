@@ -1,6 +1,11 @@
 package models
 
-import play.api.libs.json.{Json, OFormat}
+import play.api.libs.json.Json.{format, parse}
+import play.api.libs.json.OFormat
+import spray.json.DefaultJsonProtocol.{jsonFormat2, jsonFormat3, jsonFormat4, jsonFormat7}
+import spray.json.RootJsonFormat
+import spray.json.DefaultJsonProtocol._
+import scala.util.Try
 
 case class EventHeader(report_ID: Int, reporter_ID: Option[Int], time_stamp: Option[Long], related_report_ID: Option[Int])
 
@@ -29,18 +34,19 @@ case class Event(
                   target_location: TargetLocation,
                   severity: Option[String],
                   event_xterics: EventCharacteristics
-                )
+                ) extends DdosInputType with DdosJson {
 
-object Event extends DdosJson {
+  implicit val eventHeaderFormat: OFormat[EventHeader] = format[EventHeader]
+  implicit val eventTypeFormat: OFormat[EventType] = format[EventType]
+  implicit val targetFormat: OFormat[Target] = format[Target]
+  implicit val targetStateFormat: OFormat[TargetState] = format[TargetState]
+  implicit val targetLocationFormat: OFormat[TargetLocation] = format[TargetLocation]
+  implicit val consumptionFormat: OFormat[Consumption] = format[Consumption]
+  implicit val temporalBehaviourFormat: OFormat[TemporalBehaviour] = format[TemporalBehaviour]
+  implicit val eventCharacteristicsFormat: OFormat[EventCharacteristics] = format[EventCharacteristics]
 
-  implicit val eventHeaderFormat: OFormat[EventHeader] = Json.format[EventHeader]
-  implicit val eventTypeFormat: OFormat[EventType] = Json.format[EventType]
-  implicit val targetFormat: OFormat[Target] = Json.format[Target]
-  implicit val targetStateFormat: OFormat[TargetState] = Json.format[TargetState]
-  implicit val targetLocationFormat: OFormat[TargetLocation] = Json.format[TargetLocation]
-  implicit val consumptionFormat: OFormat[Consumption] = Json.format[Consumption]
-  implicit val temporalBehaviourFormat: OFormat[TemporalBehaviour] = Json.format[TemporalBehaviour]
-  implicit val eventCharacteristicsFormat: OFormat[EventCharacteristics] = Json.format[EventCharacteristics]
+  implicit val eventFormat: OFormat[Event] = format[Event]
 
-  implicit val eventFormat: OFormat[Event] = Json.format[Event]
+  override def getDdosInputFromJson(jsonString: String): Seq[Event] =
+    Try(parse(jsonString).validate[Seq[Event]].getOrElse(Nil)).recover{ e => e.printStackTrace(); Nil}.get
 }
