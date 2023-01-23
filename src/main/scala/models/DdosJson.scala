@@ -1,5 +1,5 @@
 package models
 
-trait DdosJson {
+trait DdosJson extends DdosInputType {
   def getDdosInputFromJson(jsonString: String): Seq[DdosInputType]
 }

@@ -4,9 +4,8 @@ package controllers
 import akka.actor.typed.scaladsl.{ActorContext, Behaviors}
 import akka.actor.typed.{ActorRef, ActorSystem, Behavior}
 import akka.http.scaladsl.Http
-import models.{ALLOW, Action, DENY_SOURCE, DdosInputType, Event, Policy}
+import models.{ALLOW, Action, DENY_SOURCE, Event, Policy, SprayJsonImplicits}
 import play.api.libs.json.Json.{prettyPrint, toJson}
-import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.model.{ContentTypes, HttpEntity}
 import akka.http.scaladsl.server.Directives.{as, complete, concat, entity, get, path, post}
 import akka.http.scaladsl.server.Route
@@ -130,11 +129,43 @@ object DdosEventListener2 {
       }
     }
 }
-object DdosPolicyStart extends App with DdosInputType {
+
+
+object DdosPolicyStart extends App with SprayJsonImplicits {
   implicit val ddosMainActor: ActorSystem[Event] = ActorSystem(DdosEventListener (),"DdosEventListener")
   implicit val ec: ExecutionContextExecutor = ddosMainActor.executionContext
 
-  val route: Route = getRoute
+
+  val route: Route = {
+    concat(
+      path("event") {
+        get {
+          complete(HttpEntity(ContentTypes.`text/html(UTF-8)`, "<h1>Call this endpoint with a valid event JSON as a payload, using POST  </h1>"))
+        }
+      },
+      path("event") {
+        post {
+          entity(as[Event]) { event: Event =>
+            println(event)
+            complete(HttpEntity(ContentTypes.`application/json`, s"<h1>Event of type [${event.event_type.attack_class}] receive successfully</h1>"))
+          }
+        }
+      },
+      path("policy") {
+        get {
+          complete(HttpEntity(ContentTypes.`text/html(UTF-8)`, "<h1>Call this endpoint with a valid policy JSON as a payload, using POST </h1>"))
+        }
+      },
+      path("policy") {
+        post {
+          entity(as[Policy]) { policy: Policy =>
+            println(policy)
+            complete(HttpEntity(ContentTypes.`application/json`, s"<h1>Policy [${policy.name}] received successfully</h1>"))
+          }
+        }
+      }
+    )
+  }
 
   val bindingFuture: Future[Http.ServerBinding] = {
     Http().newServerAt("localhost", 8080).bind(route)
@@ -146,37 +177,4 @@ object DdosPolicyStart extends App with DdosInputType {
   bindingFuture
     .flatMap(_.unbind()) // trigger unbinding from the port
     .onComplete(_ => ddosMainActor.terminate()) // and shutdown when done
-
-
-
-  def getRoute: Route = {
-    concat(
-      path("event") {
-        get {
-          complete(HttpEntity(ContentTypes.`text/html(UTF-8)`, "<h1>Call this endpoint with an event json as a payload, using POST  </h1>"))
-        }
-      },
-      path("event") {
-        post {
-          entity(as[Event]) { event: Event =>
-            println(event)
-            complete(HttpEntity(ContentTypes.`application/json`, "<h1>Accept an event</h1>"))
-          }
-        }
-      },
-      path("policy") {
-        get {
-          complete(HttpEntity(ContentTypes.`text/html(UTF-8)`, "<h1>Call this endpoint with a policy json as a payload, using POST </h1>"))
-        }
-      },
-      path("policy") {
-        post {
-          entity(as[Policy]) { policy: Policy =>
-            println(policy)
-            complete(HttpEntity(ContentTypes.`application/json`, "<h1>Accept an policy</h1>"))
-          }
-        }
-      }
-    )
-  }
 }
