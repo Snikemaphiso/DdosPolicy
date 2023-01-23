@@ -15,6 +15,7 @@ val mainDependencies = Seq(
   "com.typesafe.akka" %% "akka-stream" % akkaVersion,
   "com.typesafe.akka" %% "akka-http" % akkaHttpVersion,
   "com.typesafe.akka" %% "akka-http-spray-json" % akkaHttpVersion,
+  "com.github.blemale" %% "scaffeine" % "5.2.1",
   "ch.qos.logback" % "logback-classic" % "1.2.3",
   "org.scalameta" %% "scalameta" % "4.7.2"
 )

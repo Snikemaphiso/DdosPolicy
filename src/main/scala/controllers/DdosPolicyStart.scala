@@ -7,9 +7,11 @@ import akka.http.scaladsl.Http
 import models.{ALLOW, Action, DENY_SOURCE, Event, Policy, SprayJsonImplicits}
 import play.api.libs.json.Json.{prettyPrint, toJson}
 import akka.http.scaladsl.model.{ContentTypes, HttpEntity}
-import akka.http.scaladsl.server.Directives.{as, complete, concat, entity, get, path, post}
+import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
+import com.github.blemale.scaffeine.AsyncCache
 
+import java.util
 import scala.concurrent.{ExecutionContextExecutor, Future}
 import scala.io.StdIn
 
@@ -135,6 +137,17 @@ object DdosPolicyStart extends App with SprayJsonImplicits {
   implicit val ddosMainActor: ActorSystem[Event] = ActorSystem(DdosEventListener (),"DdosEventListener")
   implicit val ec: ExecutionContextExecutor = ddosMainActor.executionContext
 
+  import com.github.blemale.scaffeine.Scaffeine
+  import scala.concurrent.duration._
+
+  val policyCache: AsyncCache[String, Policy] =
+    Scaffeine()
+      .recordStats()
+      .expireAfterWrite(1.hour) //make this configurable
+      .maximumSize(500) //make this configurable
+      .buildAsync()
+
+  def getAllCachedPolicies: util.Set[String] = policyCache.underlying.asMap().keySet()
 
   val route: Route = {
     concat(
@@ -159,9 +172,20 @@ object DdosPolicyStart extends App with SprayJsonImplicits {
       path("policy") {
         post {
           entity(as[Policy]) { policy: Policy =>
-            println(policy)
+            policyCache.put(policy.name, Future.successful(policy))
             complete(HttpEntity(ContentTypes.`application/json`, s"<h1>Policy [${policy.name}] received successfully</h1>"))
           }
+        }
+      },
+      path("policy" / "list") {
+        get {
+          complete(
+            HttpEntity(
+              ContentTypes.`text/html(UTF-8)`,
+              s"""<h2>Policies in cache are:</h2>
+                  <p>$getAllCachedPolicies</p>
+              """
+            ))
         }
       }
     )
