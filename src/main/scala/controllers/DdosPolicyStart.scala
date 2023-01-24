@@ -4,28 +4,24 @@ package controllers
 import akka.actor.typed.scaladsl.{ActorContext, Behaviors}
 import akka.actor.typed.{ActorRef, ActorSystem, Behavior}
 import akka.http.scaladsl.Http
-import models.{ALLOW, Action, DENY_SOURCE, Event, Policy, SprayJsonImplicits}
+import controllers.Router._
+import models._
 import play.api.libs.json.Json.{prettyPrint, toJson}
-import akka.http.scaladsl.model.{ContentTypes, HttpEntity}
-import akka.http.scaladsl.server.Directives._
-import akka.http.scaladsl.server.Route
-import com.github.blemale.scaffeine.AsyncCache
-import play.api.libs.json.Json
 
-import java.util
 import scala.concurrent.{ExecutionContextExecutor, Future}
 import scala.io.StdIn
 
 object EventConsumer {
-
-  final case class ReceivedEvent(payload: Event, replyTo: ActorRef[Recipient])
-  final case class Recipient(payload: Event, from: ActorRef[ReceivedEvent])
 
   def apply(): Behavior[ReceivedEvent] = Behaviors.receive { (context, receivedEvent: ReceivedEvent) =>
     context.log.info("Received DDOS event: \n{}", prettyPrint(toJson(receivedEvent.payload.toString)))
     receivedEvent.replyTo ! Recipient(receivedEvent.payload, context.self)
     Behaviors.same
   }
+
+  final case class ReceivedEvent(payload: Event, replyTo: ActorRef[Recipient])
+
+  final case class Recipient(payload: Event, from: ActorRef[ReceivedEvent])
 }
 
 object PolicyOneBot {
@@ -97,7 +93,7 @@ object DdosEventListener {
               Behaviors.same
             }
           case rate: Int =>
-            if (rate >= 200 && rate < 300 ) {
+            if (rate >= 200 && rate < 300) {
               val replyTo: ActorRef[EventConsumer.Recipient] = context.spawn(PolicyTwoBot(), "Policy_Two")
               context.log.info("Performing action for Policy Two")
               eventConsumer ! EventConsumer.ReceivedEvent(event, replyTo)
@@ -120,7 +116,7 @@ object DdosEventListener2 {
 
         event.event_xterics.consumption.consumption_rate match {
           case rate: Int =>
-            if (rate >= 200 && rate < 300 ) {
+            if (rate >= 200 && rate < 300) {
               val replyTo: ActorRef[EventConsumer.Recipient] = context.spawn(PolicyTwoBot(), "Policy_Two")
               context.log.info("Performing action for Policy Two")
               eventConsumer ! EventConsumer.ReceivedEvent(event, replyTo)
@@ -135,80 +131,12 @@ object DdosEventListener2 {
 
 
 object DdosPolicyStart extends App with SprayJsonImplicits {
-  implicit val ddosMainActor: ActorSystem[Event] = ActorSystem(DdosEventListener (),"DdosEventListener")
+  implicit val ddosMainActor: ActorSystem[Event] = ActorSystem(DdosEventListener(), "DdosEventListener")
   implicit val ec: ExecutionContextExecutor = ddosMainActor.executionContext
 
-  import com.github.blemale.scaffeine.Scaffeine
-  import scala.concurrent.duration._
+  val bindingFuture: Future[Http.ServerBinding] = Http().newServerAt(host, port).bind(route)
 
-  /**
-   * key is a string and we're using the name of the policy as key since no two policies should have the same name.
-   * The value is the actual policy we are saving.
-   *
-   * We can list all policies in the cache by calling .underlying
-   */
-  val policyCache: AsyncCache[String, Policy] =
-    Scaffeine()
-      .recordStats()
-      .expireAfterWrite(1.hour) //make this configurable
-      .maximumSize(500) //make this configurable
-      .buildAsync()
-
-  def getAllCachedPolicies: util.Set[String] = policyCache.underlying.asMap().keySet()
-
-  def printAllPoliciesInCache: String = {
-    import models.DdosPlayJsonImplicits.policyWrites
-    policyCache.synchronous().asMap().values.map(p => Json.prettyPrint(Json.toJson[Policy](p))).mkString("\n")
-  }
-
-  val route: Route = {
-    concat(
-      path("event") {
-        get {
-          complete(HttpEntity(ContentTypes.`text/html(UTF-8)`, "<h1>Call this endpoint with a valid event JSON as a payload, using POST  </h1>"))
-        }
-      },
-      path("event") {
-        post {
-          entity(as[Event]) { event: Event =>
-            println(event)
-            complete(HttpEntity(ContentTypes.`application/json`, s"<h1>Event of type [${event.event_type.attack_class}] receive successfully</h1>"))
-          }
-        }
-      },
-      path("policy") {
-        get {
-          complete(HttpEntity(ContentTypes.`text/html(UTF-8)`, "<h1>Call this endpoint with a valid policy JSON as a payload, using POST </h1>"))
-        }
-      },
-      path("policy") {
-        post {
-          entity(as[Policy]) { policy: Policy =>
-            policyCache.put(policy.name, Future.successful(policy))
-            complete(HttpEntity(ContentTypes.`application/json`, s"<h1>Policy [${policy.name}] received successfully</h1>"))
-          }
-        }
-      },
-      path("policy" / "list") {
-        get {
-          println(printAllPoliciesInCache)
-          complete(
-            HttpEntity(
-              ContentTypes.`text/html(UTF-8)`,
-              s"""<h2>Policies in cache are:</h2>
-                  <p>$getAllCachedPolicies</p>
-              """
-            ))
-        }
-      }
-    )
-  }
-
-  val bindingFuture: Future[Http.ServerBinding] = {
-    Http().newServerAt("localhost", 8080).bind(route)
-  }
-
-  println(s"Server now online. Please navigate to http://localhost:8080/event\nPress RETURN to stop...")
+  println(s"Server now online. Please navigate to http://$host:$port/event\nPress RETURN to stop...")
   StdIn.readLine() // let it run until user presses return
 
   bindingFuture

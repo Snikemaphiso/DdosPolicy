@@ -1,8 +1,9 @@
 package models
 
-import play.api.libs.json.Json.parse
-import scala.util.Try
 import models.DdosPlayJsonImplicits._
+import play.api.libs.json.Json.parse
+
+import scala.util.Try
 
 case class EventHeader(report_ID: Int, reporter_ID: Option[Int], time_stamp: Option[Long], related_report_ID: Option[Int])
 
@@ -34,5 +35,5 @@ case class Event(
                 ) extends DdosJson {
 
   override def getDdosInputFromJson(jsonString: String): Seq[Event] =
-    Try(parse(jsonString).validate[Seq[Event]].getOrElse(Nil)).recover{ e => e.printStackTrace(); Nil}.get
+    Try(parse(jsonString).validate[Seq[Event]].getOrElse(Nil)).recover { e => e.printStackTrace(); Nil }.get
 }

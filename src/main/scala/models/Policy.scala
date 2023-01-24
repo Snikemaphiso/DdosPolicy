@@ -1,7 +1,7 @@
 package models
 
-import play.api.libs.json.Json.parse
 import models.DdosPlayJsonImplicits._
+import play.api.libs.json.Json.parse
 
 import scala.util.Try
 
@@ -13,8 +13,8 @@ case class Policy(name: String,
                   severity: String,
                   condition: Condition,
                   action: String) //TODO: Action needs to be mapped to the Action trait so we can have it as `action: Action`
-extends DdosJson {
+  extends DdosJson {
 
   override def getDdosInputFromJson(jsonString: String): Seq[Policy] =
-    Try(parse(jsonString).validate[Seq[Policy]].getOrElse(Nil)).recover{ e => e.printStackTrace(); Nil}.get
+    Try(parse(jsonString).validate[Seq[Policy]].getOrElse(Nil)).recover { e => e.printStackTrace(); Nil }.get
 }
