@@ -10,6 +10,7 @@ import akka.http.scaladsl.model.{ContentTypes, HttpEntity}
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
 import com.github.blemale.scaffeine.AsyncCache
+import play.api.libs.json.Json
 
 import java.util
 import scala.concurrent.{ExecutionContextExecutor, Future}
@@ -149,6 +150,11 @@ object DdosPolicyStart extends App with SprayJsonImplicits {
 
   def getAllCachedPolicies: util.Set[String] = policyCache.underlying.asMap().keySet()
 
+  def printAllPoliciesInCache: Iterable[String] = {
+    import models.DdosPlayJsonImplicits.policyWrites
+    policyCache.synchronous().asMap().values.map(p => Json.prettyPrint(Json.toJson[Policy](p)))
+  }
+
   val route: Route = {
     concat(
       path("event") {
@@ -183,7 +189,7 @@ object DdosPolicyStart extends App with SprayJsonImplicits {
             HttpEntity(
               ContentTypes.`text/html(UTF-8)`,
               s"""<h2>Policies in cache are:</h2>
-                  <p>$getAllCachedPolicies</p>
+                  <p>$printAllPoliciesInCache</p>
               """
             ))
         }

@@ -1,8 +1,8 @@
 package models
 
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
-import play.api.libs.json.Json.format
-import play.api.libs.json.OFormat
+import play.api.libs.json.Json.{format, writes}
+import play.api.libs.json.{Format, OFormat, Writes}
 import spray.json.{DefaultJsonProtocol, NullOptions, RootJsonFormat}
 
 
@@ -19,8 +19,11 @@ object DdosPlayJsonImplicits {
   implicit val eventCharacteristicsFormat: OFormat[EventCharacteristics] = format[EventCharacteristics]
   implicit val eventFormat: OFormat[Event] = format[Event]
 
-  implicit val conditionFormat: OFormat[Condition] = format[Condition]
-  implicit val policyFormat: OFormat[Policy] = format[Policy]
+  implicit val conditionFormat: Format[Condition] = format[Condition]
+  implicit val conditionWrites: Writes[Condition] = writes[Condition]
+
+  implicit val policyWrites: Writes[Policy] = writes[Policy]
+  implicit val policyFormat: Format[Policy] = format[Policy]
 }
 
 trait SprayJsonImplicits extends DefaultJsonProtocol with SprayJsonSupport with NullOptions {
