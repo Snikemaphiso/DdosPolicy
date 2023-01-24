@@ -31,7 +31,7 @@ ThisBuild / assemblyMergeStrategy := {
   case PathList("META-INF", _*) => MergeStrategy.discard
   case PathList("reference.conf") =>
     val log = sLog.value
-    log.info("concatinating reference.conf")
+    log.info("concatenating reference.conf")
     MergeStrategy.concat
   case "application.conf"       => MergeStrategy.concat
   case _                        => MergeStrategy.first

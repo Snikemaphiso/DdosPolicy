@@ -141,6 +141,12 @@ object DdosPolicyStart extends App with SprayJsonImplicits {
   import com.github.blemale.scaffeine.Scaffeine
   import scala.concurrent.duration._
 
+  /**
+   * key is a string and we're using the name of the policy as key since no two policies should have the same name.
+   * The value is the actual policy we are saving.
+   *
+   * We can list all policies in the cache by calling .underlying
+   */
   val policyCache: AsyncCache[String, Policy] =
     Scaffeine()
       .recordStats()
@@ -150,9 +156,9 @@ object DdosPolicyStart extends App with SprayJsonImplicits {
 
   def getAllCachedPolicies: util.Set[String] = policyCache.underlying.asMap().keySet()
 
-  def printAllPoliciesInCache: Iterable[String] = {
+  def printAllPoliciesInCache: String = {
     import models.DdosPlayJsonImplicits.policyWrites
-    policyCache.synchronous().asMap().values.map(p => Json.prettyPrint(Json.toJson[Policy](p)))
+    policyCache.synchronous().asMap().values.map(p => Json.prettyPrint(Json.toJson[Policy](p))).mkString("\n")
   }
 
   val route: Route = {
@@ -185,11 +191,12 @@ object DdosPolicyStart extends App with SprayJsonImplicits {
       },
       path("policy" / "list") {
         get {
+          println(printAllPoliciesInCache)
           complete(
             HttpEntity(
               ContentTypes.`text/html(UTF-8)`,
               s"""<h2>Policies in cache are:</h2>
-                  <p>$printAllPoliciesInCache</p>
+                  <p>$getAllCachedPolicies</p>
               """
             ))
         }
