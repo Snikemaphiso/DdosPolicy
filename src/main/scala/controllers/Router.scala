@@ -4,6 +4,7 @@ import akka.http.scaladsl.model.{ContentTypes, HttpEntity}
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
 import models.{Event, Policy, SprayJsonImplicits}
+import service.{PolicyEngine}
 
 import scala.concurrent.Future
 
@@ -51,7 +52,29 @@ object Router extends SprayJsonImplicits with Cache {
               """
             ))
         }
-      }
+      },
+
+      path("trigger") {
+        post {
+          println("-----Trigger match engine.")
+          entity(as[Event]) { event: Event =>
+            getAllCachedPolicyObjects.find {
+              PolicyEngine.isEventMatching(_, event)
+            } match {
+              case Some(p) => {
+                println(s"Policy ${p} matched with event ${event}")
+                PolicyEngine.getActionObject(p) match {
+                  case Some(pa) => pa.performPAction(event)
+                  case _ => println("No Policy Action Found.")
+                }
+              }
+              case _ => println("No Policy Matched")
+            }
+            complete("")
+            //            complete(HttpEntity(ContentTypes.`application/json`, s"<h1>Event of type [${event.event_type.attack_class}] receive successfully</h1>"))
+          }
+        }
+      },
     )
   }
 }

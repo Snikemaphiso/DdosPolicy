@@ -15,7 +15,7 @@ case object ALLOW extends Action {
 
 case object DEPLOY_DPI extends Action {
   override def performPAction(e: Event): Unit = {
-    println(s"Action = Deploying DPI at ${e.event_type.attack_class} ... ")
+    println(s"Action = Deploying DPI at ${e.target.target_type} & ${e.target_location}... ")
     actionName()
     println(s"...Done")
     println()
@@ -25,7 +25,7 @@ case object DEPLOY_DPI extends Action {
 
 case object MIGRATE extends Action {
   override def performPAction(e: Event): Unit = {
-    println(s"Action = Migrate ${e.target_location.location}")
+    println(s"Action = Migrate from ${e.target_location.location} to a new Virtual Location")
     println()
     println()
   }

@@ -5,7 +5,6 @@ import models.DdosPlayJsonImplicits.policyWrites
 import models.Policy
 import play.api.libs.json.Json
 
-import java.util
 import scala.concurrent.duration.DurationInt
 
 trait Cache {
@@ -20,9 +19,13 @@ trait Cache {
     .buildAsync()
 
 
-  def getAllCachedPolicies: util.Set[String] = policyCache.underlying.asMap().keySet()
+  def getAllCachedPolicies = policyCache.underlying.asMap().keySet()
+
+  import scala.jdk.CollectionConverters._
+  def getAllCachedPolicyObjects = policyCache.synchronous().asMap().values.toList
 
   def printAllPoliciesInCache: String = {
     policyCache.synchronous().asMap().values.map(p => Json.prettyPrint(Json.toJson[Policy](p))).mkString("\n")
   }
+
 }
