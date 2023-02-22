@@ -3,13 +3,13 @@ package service
 import models._
 
 object PolicyEngine {
-  def isEventMatching(policy: Policy, event: Event) = {
+  def isEventMatching(policy: Policy, event: Event): Boolean = {
     policy.target == event.target.target_type &&
       policy.severity == event.severity.getOrElse("") &&
       isConditionalMatching(policy, event)
   }
 
-  private def isConditionalMatching(policy: Policy, event: Event) = {
+  private def isConditionalMatching(policy: Policy, event: Event): Boolean = {
     val conditionalString = policy.condition.flow
     val operator = conditionalString.takeWhile(!_.isDigit)
     val value = conditionalString.dropWhile(!_.isDigit).toInt
