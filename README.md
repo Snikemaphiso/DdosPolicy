@@ -5,6 +5,6 @@ A policy to manage reactions/actions to a DDoS attack
 To run: 
 
 1. You need jq. run `brew install jq`
-2. run `sbt clean compile run`
-3. In another terminal, run `./scripts/createPolicyOnServer.sh`
-4. In another terminal, run `./scripts/util/createRandomData.sh`
+2. run `sbt clean compile run`. Output will be in this window.
+3. To populate the application with some random policies, in another terminal, run `./scripts/createPolicyOnServer.sh` (might need to runa. few times to create multiple random policies
+4. In another terminal, run `./scripts/util/createRandomData.sh` to start fring random events. 
