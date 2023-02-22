@@ -1,6 +1,6 @@
 package models
 
-abstract class Action {
+trait Action {
   def performPAction(e: Event): Unit
   protected def actionName(): Unit = println("Action: " + this.toString)
 }
