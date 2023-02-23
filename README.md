@@ -1,6 +1,6 @@
 # DDOS-Policy
 
-A policy to manage reactions/actions to a DDoS attack
+A system to manage reactions/actions to a DDoS attack
 
 ### To run:
 
