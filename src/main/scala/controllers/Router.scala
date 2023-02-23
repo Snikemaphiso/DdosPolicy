@@ -37,7 +37,7 @@ object Router extends SprayJsonImplicits with Cache {
         post {
           entity(as[Policy]) { policy: Policy =>
             policyCache.put(policy.name, Future.successful(policy))
-            complete(HttpEntity(ContentTypes.`application/json`, s"<h1>Policy [${policy.name}] received successfully</h1>"))
+            complete(HttpEntity(ContentTypes.`application/json`, s"<h1>Policy [${policy.name}] received successfully</h1>\n"))
           }
         }
       },
@@ -53,7 +53,6 @@ object Router extends SprayJsonImplicits with Cache {
             ))
         }
       },
-
       path("trigger") {
         post {
           println("-----Trigger match engine.")
@@ -61,13 +60,12 @@ object Router extends SprayJsonImplicits with Cache {
             getAllCachedPolicyValues.find {
               PolicyEngine.isEventMatching(_, event)
             } match {
-              case Some(p) => {
-                println(s"Policy ${p} matched with event ${event}")
+              case Some(p) =>
+                println(s"Policy $p matched with event $event")
                 PolicyEngine.getActionObject(p) match {
                   case Some(pa) => pa.performPAction(event)
                   case _ => println("No Policy Action Found.")
                 }
-              }
               case _ => println("No Policy Matched")
             }
             complete("")

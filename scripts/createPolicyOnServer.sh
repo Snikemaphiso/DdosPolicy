@@ -9,6 +9,6 @@ source util/createRandomData.sh
 for ((i = 1; i <= desired_count; i++)); do
   random_policy=$(createPolicyFunc)
   # Send the request
-  echo "$random_policy"
+#  echo "$random_policy"
   curl -X POST -H "Content-Type: application/json" -d "$random_policy" $url
 done
