@@ -11,6 +11,7 @@ The application works by accepting **Policy** objects in a predefined JSON forma
 ### To simulate:
 
 You'll need jq package. run `brew install jq` if you don't have the package already.
+
 The entire process can be simulated in a few steps:
 
 1. Start the application, run `sbt clean compile run` for a clean start. (Note: Output will be in this window).
