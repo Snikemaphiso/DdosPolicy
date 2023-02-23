@@ -106,30 +106,6 @@ object DdosEventListener {
     }
 }
 
-object DdosEventListener2 {
-
-  def apply(): Behavior[Event] =
-    Behaviors.setup { context: ActorContext[Event] =>
-      val eventConsumer = context.spawn(EventConsumer(), "EVENT_CONSUMER")
-
-      Behaviors.receiveMessage { event: Event =>
-
-        event.event_xterics.consumption.consumption_rate match {
-          case rate: Int =>
-            if (rate >= 200 && rate < 300) {
-              val replyTo: ActorRef[EventConsumer.Recipient] = context.spawn(PolicyTwoBot(), "Policy_Two")
-              context.log.info("Performing action for Policy Two")
-              eventConsumer ! EventConsumer.ReceivedEvent(event, replyTo)
-              Behaviors.same
-            }
-          case _ => Behaviors.same
-        }
-        Behaviors.same
-      }
-    }
-}
-
-
 object DdosPolicyStart extends App with SprayJsonImplicits {
   implicit val ddosMainActor: ActorSystem[Event] = ActorSystem(DdosEventListener(), "DdosEventListener")
   implicit val ec: ExecutionContextExecutor = ddosMainActor.executionContext
