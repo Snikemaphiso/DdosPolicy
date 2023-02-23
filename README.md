@@ -2,12 +2,14 @@
 
 A policy to manage reactions/actions to a DDoS attack
 
-To run: 
+### To run:
+
 Simply run `sbt run`
 
 The application works by accepting **Policy** objects in a predefined JSON format, then consuming **Event**s which are then compared to the **Policy** conditions.
 
-To simulate:
+### To simulate:
+
 You'll need jq package. run `brew install jq` if you don't have the package already.
 The entire process can be simulated in a few steps:
 
