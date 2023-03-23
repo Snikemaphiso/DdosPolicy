@@ -63,7 +63,14 @@ object Router extends SprayJsonImplicits with Cache {
               case Some(p) =>
                 println(s"Policy $p matched with event $event")
                 PolicyEngine.getActionObject(p) match {
-                  case Some(pa) => pa.performPAction(event)
+                  case Some(pa) =>
+                    val start = java.time.LocalDateTime.ofEpochSecond(event.event_header.time_stamp.get/1000,0,java.time.ZoneOffset.UTC)
+                    val end = java.time.LocalDateTime.ofEpochSecond(System.currentTimeMillis()/1000,0,java.time.ZoneOffset.UTC)
+                    val difference = start.until(end, java.time.temporal.ChronoUnit.SECONDS) / 1000000000.0
+
+                    println("Took " + difference + " second(s)")
+
+                    pa.performPAction(event)
                   case _ => println("No Policy Action Found.")
                 }
               case _ => println("No Policy Matched")

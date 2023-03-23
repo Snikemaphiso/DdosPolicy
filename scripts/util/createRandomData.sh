@@ -38,6 +38,7 @@ function randomEventFunc() {
   target_location="${target_location_values[RANDOM % ${#target_location_values[@]}]}"
   severity="${severity_values[RANDOM % ${#severity_values[@]}]}"
   consumption_rate="${consumption_rate_values[RANDOM % ${#consumption_rate_values[@]}]}"
+  time_stamp=$(date +%s%3)
 
   # Build JSON object using jq
   json_object=$(jq -n \
@@ -48,9 +49,11 @@ function randomEventFunc() {
     --arg key5 "$target_location" \
     --arg key6 "$severity" \
     --argjson key7 "$consumption_rate" \
+    --argjson key8 "$time_stamp" \
     '{
       "event_header": {
-        "report_ID": $key1
+        "report_ID": $key1,
+        "time_stamp": $key8
       },
       "event_type": {
         "attack_class": $key2
